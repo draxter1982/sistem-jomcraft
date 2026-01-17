@@ -4,7 +4,7 @@ import {
   Save, LogOut, LayoutDashboard, Search, Eye, Wifi, WifiOff,
   Settings, Image as ImageIcon, Upload, Pencil, ArrowLeft,
   DollarSign, AlertCircle, TrendingUp, UserX, Calendar,
-  ShoppingBag, FolderPlus, Tag
+  ShoppingBag, FolderPlus, Tag, Menu, X
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -339,7 +339,7 @@ export default function App() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (pin === '123456') setIsAuthenticated(true); 
+    if (pin === '755250') setIsAuthenticated(true); 
     else alert('PIN Salah!');
   };
 
@@ -454,106 +454,128 @@ function MainSystem({
   onCreateNew, onCreateExpense, onEdit, isEditing,
   expenseCategories, onUpdateCategories, isDemoMode
 }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const renderSidebar = () => (
-    <div className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen fixed left-0 top-0 no-print z-20 shadow-xl">
-      <div className="p-6 border-b border-slate-700">
-        <div className="flex items-center gap-3 mb-4">
-           {companyLogo ? (
-             <img src={companyLogo} alt="Logo" className="w-10 h-10 object-contain rounded bg-white p-1" />
-           ) : (
-             <div className="w-10 h-10 bg-blue-600 rounded flex items-center justify-center font-bold text-white">J</div>
-           )}
-           <h2 className="text-xl font-bold text-white tracking-tight leading-tight">JomCraft<br/><span className="text-blue-500 text-sm font-normal">Sistem Admin</span></h2>
-        </div>
-        <div className="flex items-center gap-2 mt-1 px-1">
-           <div className={`w-2 h-2 rounded-full ${!isDemoMode && isOnline ? 'bg-green-500' : 'bg-orange-500'} animate-pulse`}></div>
-           <p className="text-xs text-slate-400 font-medium">
-             {isDemoMode ? 'Mode Offline (Browser)' : (isOnline ? 'Database Connected' : 'No Connection')}
-           </p>
-        </div>
+    <>
+      {/* Mobile Menu Button */}
+      <div className="lg:hidden fixed top-4 left-4 z-50">
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 bg-slate-900 text-white rounded-lg shadow-lg">
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </div>
-      <nav className="flex-1 p-4 space-y-2">
-        <div className="text-xs font-bold text-slate-500 uppercase px-4 mb-1">Jualan & Pesanan</div>
-        <button onClick={() => setCurrentView('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === 'dashboard' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800'}`}>
-          <LayoutDashboard size={20} /> Dashboard
-        </button>
-        <button onClick={onCreateNew} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === 'create' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800'}`}>
-          <Plus size={20} /> Buat Invois/DO
-        </button>
-        
-        <div className="text-xs font-bold text-slate-500 uppercase px-4 mb-1 mt-6">Kewangan & Modal</div>
-        <button onClick={() => setCurrentView('expenses')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === 'expenses' || currentView === 'create_expense' ? 'bg-rose-600 text-white shadow-lg' : 'hover:bg-slate-800'}`}>
-          <ShoppingBag size={20} /> Rekod Belanja
-        </button>
 
-        <div className="text-xs font-bold text-slate-500 uppercase px-4 mb-1 mt-6">Lain-lain</div>
-        <button onClick={() => setCurrentView('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === 'settings' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800'}`}>
-          <Settings size={20} /> Tetapan Logo
-        </button>
-      </nav>
-      <div className="p-4 border-t border-slate-700">
-        <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-slate-800 rounded-lg transition-colors">
-          <LogOut size={20} /> Log Keluar
-        </button>
+      {/* Overlay for mobile */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        ></div>
+      )}
+
+      {/* Sidebar Content */}
+      <div className={`fixed lg:static inset-y-0 left-0 w-64 bg-slate-900 text-slate-300 flex flex-col h-screen z-40 shadow-xl transition-transform duration-300 transform ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <div className="p-6 border-b border-slate-700">
+          <div className="flex items-center gap-3 mb-4">
+             {companyLogo ? (
+               <img src={companyLogo} alt="Logo" className="w-10 h-10 object-contain rounded bg-white p-1" />
+             ) : (
+               <div className="w-10 h-10 bg-blue-600 rounded flex items-center justify-center font-bold text-white">J</div>
+             )}
+             <h2 className="text-xl font-bold text-white tracking-tight leading-tight">JomCraft<br/><span className="text-blue-500 text-sm font-normal">Sistem Admin</span></h2>
+          </div>
+          <div className="flex items-center gap-2 mt-1 px-1">
+             <div className={`w-2 h-2 rounded-full ${!isDemoMode && isOnline ? 'bg-green-500' : 'bg-orange-500'} animate-pulse`}></div>
+             <p className="text-xs text-slate-400 font-medium">
+               {isDemoMode ? 'Mode Offline (Browser)' : (isOnline ? 'Database Connected' : 'No Connection')}
+             </p>
+          </div>
+        </div>
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <div className="text-xs font-bold text-slate-500 uppercase px-4 mb-1">Jualan & Pesanan</div>
+          <button onClick={() => { setCurrentView('dashboard'); setMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === 'dashboard' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800'}`}>
+            <LayoutDashboard size={20} /> Dashboard
+          </button>
+          <button onClick={() => { onCreateNew(); setMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === 'create' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800'}`}>
+            <Plus size={20} /> Buat Invois/DO
+          </button>
+          
+          <div className="text-xs font-bold text-slate-500 uppercase px-4 mb-1 mt-6">Kewangan & Modal</div>
+          <button onClick={() => { setCurrentView('expenses'); setMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === 'expenses' || currentView === 'create_expense' ? 'bg-rose-600 text-white shadow-lg' : 'hover:bg-slate-800'}`}>
+            <ShoppingBag size={20} /> Rekod Belanja
+          </button>
+
+          <div className="text-xs font-bold text-slate-500 uppercase px-4 mb-1 mt-6">Lain-lain</div>
+          <button onClick={() => { setCurrentView('settings'); setMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === 'settings' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800'}`}>
+            <Settings size={20} /> Tetapan Logo
+          </button>
+        </nav>
+        <div className="p-4 border-t border-slate-700">
+          <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-slate-800 rounded-lg transition-colors">
+            <LogOut size={20} /> Log Keluar
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 
   return (
-    <div className="flex">
+    <div className="flex h-screen overflow-hidden">
       {renderSidebar()}
-      <main className="flex-1 ml-64 p-8 min-h-screen bg-slate-50">
-        {isDemoMode && (
-          <div className="mb-4 px-4 py-2 bg-orange-100 border border-orange-200 text-orange-700 text-sm rounded-lg flex items-center gap-2">
-            <WifiOff size={16}/> Anda sedang menggunakan <strong>Mode Offline</strong>. Data disimpan dalam browser ini sahaja dan tidak akan disegerakkan ke cloud.
-          </div>
-        )}
+      {/* Main Content Area - Responsive Width */}
+      <main className="flex-1 min-h-screen bg-slate-50 overflow-y-auto w-full lg:w-auto">
+        <div className="p-4 lg:p-8 pt-16 lg:pt-8 w-full">
+          {isDemoMode && (
+            <div className="mb-4 px-4 py-2 bg-orange-100 border border-orange-200 text-orange-700 text-sm rounded-lg flex items-center gap-2">
+              <WifiOff size={16}/> Anda sedang menggunakan <strong>Mode Offline</strong>. Data disimpan dalam browser ini sahaja dan tidak akan disegerakkan ke cloud.
+            </div>
+          )}
 
-        {currentView === 'dashboard' && (
-          <Dashboard 
-            documents={documents} 
-            onView={(doc) => { setSelectedDoc(doc); setCurrentView('view'); }} 
-            onEdit={onEdit} 
-          />
-        )}
-        {currentView === 'expenses' && (
-          <ExpensesDashboard 
-             documents={documents} 
-             onCreate={onCreateExpense} 
-             onEdit={onEdit} 
-             onDelete={onDelete}
-             categories={expenseCategories}
-             onUpdateCategories={onUpdateCategories}
-          />
-        )}
-        {currentView === 'create' && (
-          <CreateForm 
-            formData={formData} setFormData={setFormData} 
-            onSave={onSave} onCancel={() => setCurrentView('dashboard')}
-            isEditing={isEditing}
-          />
-        )}
-        {currentView === 'create_expense' && (
-          <CreateExpenseForm
-             expenseData={expenseData} setExpenseData={setExpenseData}
-             categories={expenseCategories}
-             onSave={onSave} onCancel={() => setCurrentView('expenses')}
-             isEditing={isEditing}
-          />
-        )}
-        {currentView === 'settings' && (
-          <SettingsView currentLogo={companyLogo} onSaveLogo={onSaveLogo} />
-        )}
-        {currentView === 'view' && selectedDoc && (
-          <DocumentView 
-            doc={selectedDoc} 
-            onBack={() => setCurrentView('dashboard')} 
-            onEdit={() => onEdit(selectedDoc)}
-            onDelete={() => onDelete(selectedDoc.id)}
-            logo={companyLogo}
-          />
-        )}
+          {currentView === 'dashboard' && (
+            <Dashboard 
+              documents={documents} 
+              onView={(doc) => { setSelectedDoc(doc); setCurrentView('view'); }} 
+              onEdit={onEdit} 
+            />
+          )}
+          {currentView === 'expenses' && (
+            <ExpensesDashboard 
+               documents={documents} 
+               onCreate={onCreateExpense} 
+               onEdit={onEdit} 
+               onDelete={onDelete}
+               categories={expenseCategories}
+               onUpdateCategories={onUpdateCategories}
+            />
+          )}
+          {currentView === 'create' && (
+            <CreateForm 
+              formData={formData} setFormData={setFormData} 
+              onSave={onSave} onCancel={() => setCurrentView('dashboard')}
+              isEditing={isEditing}
+            />
+          )}
+          {currentView === 'create_expense' && (
+            <CreateExpenseForm
+               expenseData={expenseData} setExpenseData={setExpenseData}
+               categories={expenseCategories}
+               onSave={onSave} onCancel={() => setCurrentView('expenses')}
+               isEditing={isEditing}
+            />
+          )}
+          {currentView === 'settings' && (
+            <SettingsView currentLogo={companyLogo} onSaveLogo={onSaveLogo} />
+          )}
+          {currentView === 'view' && selectedDoc && (
+            <DocumentView 
+              doc={selectedDoc} 
+              onBack={() => setCurrentView('dashboard')} 
+              onEdit={() => onEdit(selectedDoc)}
+              onDelete={() => onDelete(selectedDoc.id)}
+              logo={companyLogo}
+            />
+          )}
+        </div>
       </main>
     </div>
   );
@@ -647,7 +669,7 @@ function Dashboard({ documents, onView, onEdit }) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="w-full">
       <div className="mb-8">
          <h1 className="text-3xl font-bold text-slate-800">Dashboard Jualan</h1>
          <p className="text-slate-500 mt-1">Pantau jualan, hutang dan dokumen.</p>
@@ -850,7 +872,7 @@ function ExpensesDashboard({ documents, onCreate, onEdit, onDelete, categories, 
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="w-full">
       <div className="flex justify-between items-end mb-8">
         <div>
            <h1 className="text-3xl font-bold text-slate-800">Rekod Perbelanjaan</h1>
@@ -997,7 +1019,7 @@ function CreateForm({ formData, setFormData, onSave, onCancel, isEditing }) {
   const calculateTotal = () => formData.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
 
   return (
-    <div className="max-w-4xl mx-auto pb-20">
+    <div className="w-full max-w-5xl mx-auto pb-20">
       <div className="flex items-center gap-4 mb-6">
         <button onClick={onCancel} className="p-2 hover:bg-slate-200 rounded-full transition-colors"><ArrowLeft size={20} className="text-slate-600"/></button>
         <div>
@@ -1125,7 +1147,7 @@ function CreateExpenseForm({ expenseData, setExpenseData, categories, onSave, on
   const calculateTotal = () => expenseData.items.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
 
   return (
-    <div className="max-w-2xl mx-auto pb-20">
+    <div className="w-full max-w-4xl mx-auto pb-20">
       <div className="flex items-center gap-4 mb-6">
         <button onClick={onCancel} className="p-2 hover:bg-slate-200 rounded-full transition-colors"><ArrowLeft size={20} className="text-slate-600"/></button>
         <div>
@@ -1206,7 +1228,7 @@ function SettingsView({ currentLogo, onSaveLogo }) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="w-full max-w-3xl mx-auto">
       <h2 className="text-3xl font-bold text-slate-800 mb-8">Tetapan Sistem</h2>
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
         <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
