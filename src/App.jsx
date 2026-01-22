@@ -5,7 +5,7 @@ import {
   Settings, Image as ImageIcon, Upload, Pencil, ArrowLeft,
   DollarSign, AlertCircle, TrendingUp, UserX, Calendar,
   ShoppingBag, Tag, Menu, X, Share2, Receipt, File, QrCode,
-  CreditCard, Banknote, ChevronRight, BarChart3
+  CreditCard, Banknote, ChevronRight, BarChart3, MapPin, FileText as FileTextIcon
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -55,10 +55,18 @@ export default function App() {
   
   // Data States
   const [documents, setDocuments] = useState([]);
-  const [companyLogo, setCompanyLogo] = useState(null);
-  const [paymentQr, setPaymentQr] = useState(null);
   const [expenseCategories, setExpenseCategories] = useState(['Barang Kedai', 'Alat Tulis', 'Pengangkutan', 'Utiliti']);
   
+  // --- SETTINGS STATE (DEFAULT VALUES) ---
+  const [companyLogo, setCompanyLogo] = useState(null);
+  const [paymentQr, setPaymentQr] = useState(null);
+  const [companyAddress, setCompanyAddress] = useState(
+    "No 18-A, Jalan Berlian 1, Taman Renggam Jaya\n86200 Simpang Renggam, Johor\nTel : +60137722595"
+  );
+  const [paymentInfo, setPaymentInfo] = useState(
+    "Deposit 70% diperlukan.\nBank: HABBYTE ENTERPRISE\nNo. Akaun: 2513 1100 01 2029\nSila lampirkan bukti pembayaran kepada kami."
+  );
+
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -107,8 +115,10 @@ export default function App() {
             getDoc(doc(db, 'jomcraft_docs', 'app_settings')).then(settingSnap => {
                if(settingSnap.exists()) {
                  const data = settingSnap.data();
-                 setCompanyLogo(data.logoUrl);
-                 setPaymentQr(data.paymentQrUrl);
+                 if(data.logoUrl) setCompanyLogo(data.logoUrl);
+                 if(data.paymentQrUrl) setPaymentQr(data.paymentQrUrl);
+                 if(data.companyAddress) setCompanyAddress(data.companyAddress);
+                 if(data.paymentInfo) setPaymentInfo(data.paymentInfo);
                }
                setPublicLoading(false);
             });
@@ -168,6 +178,8 @@ export default function App() {
         const settings = JSON.parse(savedSettings);
         if (settings.logoUrl) setCompanyLogo(settings.logoUrl);
         if (settings.paymentQrUrl) setPaymentQr(settings.paymentQrUrl);
+        if (settings.companyAddress) setCompanyAddress(settings.companyAddress);
+        if (settings.paymentInfo) setPaymentInfo(settings.paymentInfo);
         if (settings.expenseCategories) setExpenseCategories(settings.expenseCategories);
       }
       return;
@@ -183,6 +195,8 @@ export default function App() {
       let settingsLogo = null;
       let settingsQr = null;
       let loadedCategories = null;
+      let loadedAddress = null;
+      let loadedPaymentInfo = null;
 
       snapshot.docs.forEach(docSnap => {
         const data = docSnap.data();
@@ -190,6 +204,8 @@ export default function App() {
           settingsLogo = data.logoUrl;
           settingsQr = data.paymentQrUrl;
           if (data.expenseCategories) loadedCategories = data.expenseCategories;
+          if (data.companyAddress) loadedAddress = data.companyAddress;
+          if (data.paymentInfo) loadedPaymentInfo = data.paymentInfo;
         } else {
           if (data.type) {
             docsData.push({ id: docSnap.id, ...data });
@@ -207,6 +223,8 @@ export default function App() {
       if (settingsLogo) setCompanyLogo(settingsLogo);
       if (settingsQr) setPaymentQr(settingsQr);
       if (loadedCategories) setExpenseCategories(loadedCategories);
+      if (loadedAddress) setCompanyAddress(loadedAddress);
+      if (loadedPaymentInfo) setPaymentInfo(loadedPaymentInfo);
 
     }, (error) => {
       console.error("Error fetching data:", error);
@@ -298,24 +316,25 @@ export default function App() {
     }
   };
 
-  const handleSaveSettings = async (type, url) => {
-    if (type === 'logo') setCompanyLogo(url);
-    if (type === 'qr') setPaymentQr(url);
+  const handleSaveSettings = async (updates) => {
+    // updates is object { logoUrl, paymentQrUrl, companyAddress, paymentInfo }
+    if (updates.logoUrl !== undefined) setCompanyLogo(updates.logoUrl);
+    if (updates.paymentQrUrl !== undefined) setPaymentQr(updates.paymentQrUrl);
+    if (updates.companyAddress !== undefined) setCompanyAddress(updates.companyAddress);
+    if (updates.paymentInfo !== undefined) setPaymentInfo(updates.paymentInfo);
     
     alert("Tetapan berjaya disimpan!");
     
     if (isDemoMode) {
       const settings = JSON.parse(localStorage.getItem('jomcraft_demo_settings') || '{}');
-      if (type === 'logo') settings.logoUrl = url;
-      if (type === 'qr') settings.paymentQrUrl = url;
-      localStorage.setItem('jomcraft_demo_settings', JSON.stringify(settings));
+      const newSettings = { ...settings, ...updates };
+      localStorage.setItem('jomcraft_demo_settings', JSON.stringify(newSettings));
       return;
     }
     if (!user) return;
     try {
-      const updateData = type === 'logo' ? { logoUrl: url } : { paymentQrUrl: url };
       await setDoc(doc(db, 'jomcraft_docs', 'app_settings'), {
-        ...updateData,
+        ...updates,
         updatedAt: new Date().toISOString(),
         type: 'settings'
       }, { merge: true });
@@ -412,6 +431,8 @@ export default function App() {
                 onDelete={() => {}} 
                 logo={companyLogo}
                 paymentQr={paymentQr}
+                companyAddress={companyAddress}
+                paymentInfo={paymentInfo}
                 readOnly={true} 
              />
           </div>
@@ -487,6 +508,8 @@ export default function App() {
         isOnline={isOnline}
         companyLogo={companyLogo}
         paymentQr={paymentQr}
+        companyAddress={companyAddress}
+        paymentInfo={paymentInfo}
         onSaveSettings={handleSaveSettings}
         onCreateNew={handleCreateNew}
         onCreateExpense={handleCreateExpense}
@@ -505,7 +528,7 @@ export default function App() {
 function MainSystem({ 
   documents, onLogout, currentView, setCurrentView, 
   formData, setFormData, expenseData, setExpenseData, selectedDoc, setSelectedDoc,
-  onSave, onDelete, isOnline, companyLogo, paymentQr, onSaveSettings,
+  onSave, onDelete, isOnline, companyLogo, paymentQr, companyAddress, paymentInfo, onSaveSettings,
   onCreateNew, onCreateExpense, onEdit, isEditing,
   expenseCategories, onUpdateCategories, isDemoMode
 }) {
@@ -607,7 +630,13 @@ function MainSystem({
              />
            )}
            {currentView === 'settings' && (
-             <SettingsView currentLogo={companyLogo} paymentQr={paymentQr} onSaveSettings={onSaveSettings} />
+             <SettingsView 
+                currentLogo={companyLogo} 
+                paymentQr={paymentQr} 
+                currentAddress={companyAddress}
+                currentPaymentInfo={paymentInfo}
+                onSaveSettings={onSaveSettings} 
+             />
            )}
            {currentView === 'view' && selectedDoc && (
              <DocumentView 
@@ -617,6 +646,8 @@ function MainSystem({
                onDelete={() => onDelete(selectedDoc.id)}
                logo={companyLogo}
                paymentQr={paymentQr}
+               companyAddress={companyAddress}
+               paymentInfo={paymentInfo}
              />
            )}
         </main>
@@ -999,32 +1030,60 @@ function CreateExpenseForm({ expenseData, setExpenseData, categories, onSave, on
 
 // ... SettingsView & DocumentView remain mostly the same logic, ensure classes use rounded-2xl/xl and shadow-sm for consistency ...
 
-function SettingsView({ currentLogo, paymentQr, onSaveSettings }) {
-  // Simplified Settings View with Bento styling
+function SettingsView({ currentLogo, paymentQr, currentAddress, currentPaymentInfo, onSaveSettings }) {
   const [logoUrl, setLogoUrl] = useState(currentLogo || '');
   const [qrUrl, setQrUrl] = useState(paymentQr || '');
+  const [address, setAddress] = useState(currentAddress || '');
+  const [paymentFooter, setPaymentFooter] = useState(currentPaymentInfo || '');
   
   return (
     <div className="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      {/* ADDRESS SETTINGS */}
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 md:col-span-2">
+        <h3 className="font-bold text-lg mb-6 flex items-center gap-2"><MapPin className="text-orange-500"/> Alamat Syarikat (Header)</h3>
+        <textarea 
+          placeholder="Nama syarikat, alamat, no telefon..." 
+          value={address} 
+          onChange={(e) => setAddress(e.target.value)} 
+          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl mb-4 text-sm h-32 focus:ring-2 focus:ring-orange-500 outline-none" 
+        />
+        <button onClick={() => onSaveSettings({ companyAddress: address })} className="w-full py-3 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 transition-all">Simpan Alamat</button>
+      </div>
+
+      {/* LOGO SETTINGS */}
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
         <h3 className="font-bold text-lg mb-6 flex items-center gap-2"><ImageIcon className="text-blue-500"/> Logo Syarikat</h3>
         <input type="text" placeholder="URL Logo..." value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl mb-4 text-sm" />
-        <button onClick={() => onSaveSettings('logo', logoUrl)} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-all">Simpan Logo</button>
+        <button onClick={() => onSaveSettings({ logoUrl })} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-all">Simpan Logo</button>
       </div>
+
+      {/* QR & PAYMENT INFO SETTINGS */}
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
-        <h3 className="font-bold text-lg mb-6 flex items-center gap-2"><QrCode className="text-green-500"/> DuitNow QR</h3>
+        <h3 className="font-bold text-lg mb-6 flex items-center gap-2"><QrCode className="text-green-500"/> DuitNow QR & Footer</h3>
         <input type="text" placeholder="URL QR Code..." value={qrUrl} onChange={(e) => setQrUrl(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl mb-4 text-sm" />
-        <button onClick={() => onSaveSettings('qr', qrUrl)} className="w-full py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-all">Simpan QR</button>
+        
+        <label className="text-xs font-bold text-slate-400 uppercase mt-4 mb-2 block">Maklumat Pembayaran (Footer)</label>
+        <textarea 
+          placeholder="Bank, No Akaun, Nota..." 
+          value={paymentFooter} 
+          onChange={(e) => setPaymentFooter(e.target.value)} 
+          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl mb-4 text-sm h-24 focus:ring-2 focus:ring-green-500 outline-none" 
+        />
+
+        <button onClick={() => onSaveSettings({ paymentQrUrl: qrUrl, paymentInfo: paymentFooter })} className="w-full py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-all">Simpan QR & Footer</button>
       </div>
+
     </div>
   );
 }
 
-function DocumentView({ doc, onBack, onDelete, logo, paymentQr, onEdit, readOnly = false }) {
+function DocumentView({ doc, onBack, onDelete, logo, paymentQr, companyAddress, paymentInfo, onEdit, readOnly = false }) {
   // ... Logic remains same ...
   const [viewMode, setViewMode] = useState('a4');
   const isPaid = ['paid', 'paid_cash', 'paid_online'].includes(doc.paymentStatus) && doc.type === 'invoice';
   const total = doc.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const getTitle = (t) => t === 'do' ? 'DELIVERY ORDER' : t === 'quotation' ? 'SEBUT HARGA' : 'INVOIS';
 
   // Reusing the same render logic but wrapped in a cleaner container if needed
   // For brevity, using the previous logic which was good, just ensure container is responsive
@@ -1051,20 +1110,25 @@ function DocumentView({ doc, onBack, onDelete, logo, paymentQr, onEdit, readOnly
                 <div className="flex gap-4 items-center">
                     {logo && <img src={logo} className={`object-contain ${viewMode === 'receipt' ? 'w-16 h-16 mb-2' : 'w-24 h-24'}`} />}
                     {viewMode !== 'receipt' && (
-                        <div><h1 className="text-3xl font-extrabold text-slate-900">Habbyte Enterprise</h1><p className="text-sm text-slate-500">(JM0913246-M)<br/>Simpang Renggam, Johor</p></div>
+                        <div>
+                          {/* DYNAMIC ADDRESS HEADER */}
+                          <h1 className="text-3xl font-extrabold text-slate-900 whitespace-pre-line">{companyAddress ? companyAddress.split('\n')[0] : 'Habbyte Enterprise'}</h1>
+                          <p className="text-sm text-slate-500 whitespace-pre-line mt-1">
+                            {companyAddress ? companyAddress.split('\n').slice(1).join('\n') : '(JM0913246-M)\nSimpang Renggam, Johor'}
+                          </p>
+                        </div>
                     )}
                 </div>
                 <div className={`${viewMode === 'receipt' ? 'w-full my-2 border-b border-dashed' : 'text-right'}`}>
-                    {viewMode !== 'receipt' && <><h2 className="text-3xl font-bold text-slate-300 uppercase">{doc.type}</h2><p>{doc.number}</p></>}
+                    {viewMode !== 'receipt' && <><h2 className="text-3xl font-bold text-slate-300 uppercase">{getTitle(doc.type)}</h2><p>{doc.number}</p></>}
                 </div>
             </div>
             
             {/* Receipt Specific Header */}
             {viewMode === 'receipt' && (
                 <div className="mb-4">
-                    <h2 className="font-bold text-lg uppercase">Habbyte Enterprise</h2>
-                    <p className="mb-2">(JM0913246-M)</p>
-                    <div className="flex justify-between font-bold border-b border-black pb-1 mb-1"><span>{doc.type}</span><span>{doc.number}</span></div>
+                    <h2 className="font-bold text-lg uppercase whitespace-pre-line">{companyAddress ? companyAddress.split('\n')[0] : 'Habbyte Enterprise'}</h2>
+                    <div className="flex justify-between font-bold border-b border-black pb-1 mb-1"><span>{getTitle(doc.type)}</span><span>{doc.number}</span></div>
                     <p className="text-left">Tarikh: {doc.date}</p>
                 </div>
             )}
@@ -1093,12 +1157,36 @@ function DocumentView({ doc, onBack, onDelete, logo, paymentQr, onEdit, readOnly
             {/* QR & Footer */}
             {isPaid && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-8 border-green-500 text-green-500 font-black text-6xl px-4 py-2 -rotate-45 opacity-20 pointer-events-none">PAID</div>}
             
-            {paymentQr && !isPaid && (
-                <div className="mt-8 flex flex-col items-center">
-                    <p className="text-[10px] font-bold mb-2">SCAN UNTUK BAYAR</p>
-                    <img src={paymentQr} className="w-32 h-32 border p-2" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-16 border-t-2 border-slate-100 pt-8 break-inside-avoid">
+                <div>
+                  {(doc.type === 'invoice' || doc.type === 'quotation') && (
+                    <div className="mb-6">
+                      <h4 className="font-bold text-sm text-slate-800 mb-2 uppercase tracking-wider">Maklumat Pembayaran:</h4>
+                      <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-sm text-slate-700 leading-relaxed flex flex-col sm:flex-row gap-4">
+                        <div className="flex-1 whitespace-pre-line">
+                           {/* DYNAMIC PAYMENT INFO */}
+                           {paymentInfo || 'Sila hubungi admin untuk maklumat pembayaran.'}
+                        </div>
+                        {/* QR Code Section */}
+                        {paymentQr && (
+                          <div className="flex flex-col items-center justify-center border-l pl-4 border-slate-200">
+                            <img src={paymentQr} alt="QR Pay" className="w-24 h-24 object-contain border border-slate-200 p-1 bg-white mb-1" />
+                            <span className="text-[10px] font-bold text-slate-500">SCAN & BAYAR</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {doc.notes && <div><h4 className="font-bold text-sm text-slate-800 mb-1 uppercase tracking-wider">Nota:</h4><p className="text-sm text-slate-500 whitespace-pre-line italic">{doc.notes}</p></div>}
                 </div>
-            )}
+                {viewMode !== 'receipt' && (
+                  <div className="text-center flex flex-col justify-end pb-2">
+                    <div className="h-24 border-b border-slate-300 mb-2 w-3/4 mx-auto"></div>
+                    <p className="text-xs text-slate-400 uppercase font-bold tracking-widest">Tandatangan & Cop Rasmi</p>
+                  </div>
+                )}
+            </div>
+
             </div>
         </div>
         <style>{`@media print { .no-print { display: none !important; } body { background: white; } .printable-area { box-shadow: none; width: 100%; margin: 0; } }`}</style>
