@@ -33,6 +33,14 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const appId = 'jomcraft-system'; 
 
+// --- HELPER: GET LOCAL DATE STRING (YYYY-MM-DD) ---
+const getLocalDate = () => {
+  const now = new Date();
+  const offset = now.getTimezoneOffset() * 60000;
+  const localISOTime = (new Date(now - offset)).toISOString().slice(0, 10);
+  return localISOTime;
+};
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -62,19 +70,19 @@ export default function App() {
   const defaultFormData = {
     type: 'invoice',
     number: '',
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalDate(), // Guna local date
     clientName: '',
     clientAddress: '',
     clientPhone: '',
     items: [{ id: 1, description: '', quantity: 1, price: 0 }],
     notes: '',
     status: 'Pending',
-    paymentStatus: 'unpaid' // unpaid, paid_cash, paid_online
+    paymentStatus: 'unpaid' 
   };
 
   const defaultExpenseData = {
     type: 'expense',
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalDate(), // Guna local date
     category: '',
     items: [{ id: 1, description: '', price: 0 }], 
     total: 0
@@ -338,14 +346,14 @@ export default function App() {
 
   // --- NAVIGATION & LOGIN ---
   const handleCreateNew = () => {
-    setFormData({ ...defaultFormData, number: `INV-${Date.now().toString().slice(-6)}` });
+    setFormData({ ...defaultFormData, number: `INV-${Date.now().toString().slice(-6)}`, date: getLocalDate() });
     setIsEditing(false);
     setEditId(null);
     setCurrentView('create');
   };
 
   const handleCreateExpense = () => {
-    setExpenseData({ ...defaultExpenseData, category: expenseCategories[0] || '' });
+    setExpenseData({ ...defaultExpenseData, category: expenseCategories[0] || '', date: getLocalDate() });
     setIsEditing(false);
     setEditId(null);
     setCurrentView('create_expense');
@@ -365,6 +373,7 @@ export default function App() {
 
   const handleLogin = (e) => {
     e.preventDefault();
+    // PIN ADMIN DITUKAR KEPADA 755250
     if (pin === '755250') setIsAuthenticated(true); 
     else alert('PIN Salah!');
   };
@@ -545,7 +554,7 @@ function MainSystem({
       {/* Mobile Overlay */}
       {mobileMenuOpen && <div className="fixed inset-0 bg-black/20 z-40 lg:hidden" onClick={() => setMobileMenuOpen(false)}></div>}
 
-      <div className="flex-1 lg:ml-64 flex flex-col min-w-0">
+      <div className="flex-1 lg:ml-64 flex flex-col min-w-0 transition-all duration-300">
         {/* Top Header for Mobile */}
         <header className="lg:hidden bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 sticky top-0 z-30">
            <div className="flex items-center gap-3">
@@ -557,7 +566,7 @@ function MainSystem({
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
+        <main className="flex-1 p-4 lg:p-8 overflow-y-auto overflow-x-hidden">
            {isDemoMode && (
              <div className="mb-6 px-4 py-3 bg-orange-50 border border-orange-200 text-orange-800 text-sm rounded-xl flex items-center gap-3">
                <WifiOff size={18}/>
@@ -696,7 +705,7 @@ function Dashboard({ documents, onView, onEdit }) {
 
   // Bento Grid Layout
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
@@ -742,15 +751,14 @@ function Dashboard({ documents, onView, onEdit }) {
               <h3 className="font-bold text-slate-800 flex items-center gap-2"><BarChart3 size={18}/> {chartTitle}</h3>
               {/* Simple Year/Month filter based on view */}
               {chartView !== 'yearly' && (
-                <select value={chartFilter} onChange={(e) => setChartFilter(e.target.value)} className="text-xs border-none bg-slate-50 rounded-lg px-2 py-1 font-medium outline-none">
-                   {/* Logic to show relevant options would go here, simplified for brevity */}
+                <select value={chartFilter} onChange={(e) => setChartFilter(e.target.value)} className="text-xs border-none bg-slate-50 rounded-lg px-2 py-1 font-medium outline-none cursor-pointer">
                    <option value={chartFilter}>{chartFilter}</option>
                 </select>
               )}
            </div>
-           <div className="h-64 w-full flex items-end gap-2">
+           <div className="h-64 w-full flex items-end gap-2 overflow-x-auto pb-2">
               {chartData.map((d, i) => (
-                <div key={i} className="flex-1 flex flex-col justify-end items-center group relative h-full">
+                <div key={i} className="flex-1 flex flex-col justify-end items-center group relative h-full min-w-[20px]">
                    <div className="w-full bg-slate-100 rounded-t-md relative overflow-hidden h-full flex items-end">
                       <div style={{ height: `${(d.total / chartMax) * 100}%` }} className="w-full bg-slate-900 transition-all duration-500 group-hover:bg-blue-600"></div>
                    </div>
@@ -778,8 +786,8 @@ function Dashboard({ documents, onView, onEdit }) {
                  />
               </div>
            </div>
-           <div className="overflow-x-auto">
-             <table className="w-full text-left text-sm">
+           <div className="overflow-x-auto w-full">
+             <table className="w-full text-left text-sm min-w-[700px]">
                <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
                  <tr>
                    <th className="px-6 py-4 font-semibold">No. Rujukan</th>
@@ -828,12 +836,11 @@ function Dashboard({ documents, onView, onEdit }) {
 
 // --- EXPENSES (Simplified for Bento) ---
 function ExpensesDashboard({ documents, onCreate, onEdit, onDelete, categories, onUpdateCategories }) {
-   // Same logic as before, just wrapper updated to match dashboard style
    const expenses = documents.filter(d => d.type === 'expense');
    const totalExpense = expenses.reduce((acc, curr) => acc + (curr.total || 0), 0);
 
    return (
-     <div className="space-y-6">
+     <div className="space-y-6 w-full">
        <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-slate-900">Perbelanjaan</h1>
           <button onClick={onCreate} className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all"><Plus size={18} /> Tambah</button>
@@ -846,16 +853,18 @@ function ExpensesDashboard({ documents, onCreate, onEdit, onDelete, categories, 
           </div>
           {/* Table Container */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm md:col-span-2 overflow-hidden">
-             <table className="w-full text-left text-sm">
-               <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
-                 <tr><th className="px-6 py-4">Tarikh</th><th className="px-6 py-4">Perkara</th><th className="px-6 py-4 text-right">Jumlah</th><th className="px-6 py-4 text-center">Aksi</th></tr>
-               </thead>
-               <tbody className="divide-y divide-slate-100">
-                 {expenses.map(doc => (
-                   <tr key={doc.id} className="hover:bg-slate-50"><td className="px-6 py-4 text-slate-500">{doc.date}</td><td className="px-6 py-4 font-medium text-slate-900">{doc.items?.[0]?.description}</td><td className="px-6 py-4 text-right font-mono text-rose-600">RM {doc.total}</td><td className="px-6 py-4 text-center"><button onClick={() => onDelete(doc.id, 'expense')} className="text-red-400 hover:text-red-600"><Trash2 size={16}/></button></td></tr>
-                 ))}
-               </tbody>
-             </table>
+             <div className="overflow-x-auto w-full">
+               <table className="w-full text-left text-sm min-w-[600px]">
+                 <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
+                   <tr><th className="px-6 py-4">Tarikh</th><th className="px-6 py-4">Perkara</th><th className="px-6 py-4 text-right">Jumlah</th><th className="px-6 py-4 text-center">Aksi</th></tr>
+                 </thead>
+                 <tbody className="divide-y divide-slate-100">
+                   {expenses.map(doc => (
+                     <tr key={doc.id} className="hover:bg-slate-50"><td className="px-6 py-4 text-slate-500">{doc.date}</td><td className="px-6 py-4 font-medium text-slate-900">{doc.items?.[0]?.description}</td><td className="px-6 py-4 text-right font-mono text-rose-600">RM {doc.total}</td><td className="px-6 py-4 text-center"><button onClick={() => onDelete(doc.id, 'expense')} className="text-red-400 hover:text-red-600"><Trash2 size={16}/></button></td></tr>
+                   ))}
+                 </tbody>
+               </table>
+             </div>
           </div>
        </div>
      </div>
@@ -885,8 +894,6 @@ function CreateForm({ formData, setFormData, onSave, onCancel, isEditing }) {
           ))}
         </div>
 
-        {/* ... (Fields remain similar but with updated input classes: border-slate-200 focus:ring-slate-900) ... */}
-        
         {/* Payment Status Buttons */}
         {formData.type === 'invoice' && (
           <div className="mb-8">
@@ -909,7 +916,18 @@ function CreateForm({ formData, setFormData, onSave, onCancel, isEditing }) {
         {/* Client Inputs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
            <div><label className="text-xs font-bold text-slate-500 uppercase mb-1 block">No. Rujukan</label><input required value={formData.number} onChange={e => setFormData({...formData, number: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-slate-900 transition-all" /></div>
-           <div><label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Tarikh</label><input required type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-slate-900 transition-all" /></div>
+           
+           {/* DATE PICKER FIX */}
+           <div>
+             <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Tarikh</label>
+             <input 
+               required 
+               type="date" 
+               value={formData.date} 
+               onChange={e => setFormData({...formData, date: e.target.value})} 
+               className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer" 
+             />
+           </div>
         </div>
 
         <div className="mb-8">
@@ -1011,7 +1029,7 @@ function DocumentView({ doc, onBack, onDelete, logo, paymentQr, onEdit, readOnly
   // Reusing the same render logic but wrapped in a cleaner container if needed
   // For brevity, using the previous logic which was good, just ensure container is responsive
   return (
-     <div className="max-w-4xl mx-auto">
+     <div className="max-w-4xl mx-auto w-full">
         {!readOnly && (
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 no-print bg-slate-900 text-white p-4 rounded-2xl shadow-xl gap-4">
           <button onClick={onBack} className="flex items-center gap-2 hover:text-slate-300 font-medium">&larr; Kembali</button>
@@ -1025,61 +1043,63 @@ function DocumentView({ doc, onBack, onDelete, logo, paymentQr, onEdit, readOnly
         </div>
         )}
         
-        <div className={`bg-white shadow-2xl printable-area relative overflow-hidden mx-auto ${viewMode === 'receipt' ? 'w-[300px] p-4 text-xs' : 'w-full p-12 min-h-[29.7cm]'}`}>
-           {/* ... Same content content logic as previous ... */}
-           {/* Header */}
-           <div className={`flex ${viewMode === 'receipt' ? 'flex-col text-center' : 'justify-between items-start border-b-2 border-slate-800 pb-8 mb-8'}`}>
-              <div className="flex gap-4 items-center">
-                 {logo && <img src={logo} className={`object-contain ${viewMode === 'receipt' ? 'w-16 h-16 mb-2' : 'w-24 h-24'}`} />}
-                 {viewMode !== 'receipt' && (
-                    <div><h1 className="text-3xl font-extrabold text-slate-900">Habbyte Enterprise</h1><p className="text-sm text-slate-500">(JM0913246-M)<br/>Simpang Renggam, Johor</p></div>
-                 )}
-              </div>
-              <div className={`${viewMode === 'receipt' ? 'w-full my-2 border-b border-dashed' : 'text-right'}`}>
-                 {viewMode !== 'receipt' && <><h2 className="text-3xl font-bold text-slate-300 uppercase">{doc.type}</h2><p>{doc.number}</p></>}
-              </div>
-           </div>
-           
-           {/* Receipt Specific Header */}
-           {viewMode === 'receipt' && (
-             <div className="mb-4">
-                <h2 className="font-bold text-lg uppercase">Habbyte Enterprise</h2>
-                <p className="mb-2">(JM0913246-M)</p>
-                <div className="flex justify-between font-bold border-b border-black pb-1 mb-1"><span>{doc.type}</span><span>{doc.number}</span></div>
-                <p className="text-left">Tarikh: {doc.date}</p>
-             </div>
-           )}
+        <div className="w-full overflow-x-auto pb-8">
+            <div className={`bg-white shadow-2xl printable-area relative overflow-hidden mx-auto ${viewMode === 'receipt' ? 'w-[300px] p-4 text-xs' : 'min-w-[800px] w-full max-w-4xl p-12 min-h-[29.7cm]'}`}>
+            {/* ... Same content content logic as previous ... */}
+            {/* Header */}
+            <div className={`flex ${viewMode === 'receipt' ? 'flex-col text-center' : 'justify-between items-start border-b-2 border-slate-800 pb-8 mb-8'}`}>
+                <div className="flex gap-4 items-center">
+                    {logo && <img src={logo} className={`object-contain ${viewMode === 'receipt' ? 'w-16 h-16 mb-2' : 'w-24 h-24'}`} />}
+                    {viewMode !== 'receipt' && (
+                        <div><h1 className="text-3xl font-extrabold text-slate-900">Habbyte Enterprise</h1><p className="text-sm text-slate-500">(JM0913246-M)<br/>Simpang Renggam, Johor</p></div>
+                    )}
+                </div>
+                <div className={`${viewMode === 'receipt' ? 'w-full my-2 border-b border-dashed' : 'text-right'}`}>
+                    {viewMode !== 'receipt' && <><h2 className="text-3xl font-bold text-slate-300 uppercase">{doc.type}</h2><p>{doc.number}</p></>}
+                </div>
+            </div>
+            
+            {/* Receipt Specific Header */}
+            {viewMode === 'receipt' && (
+                <div className="mb-4">
+                    <h2 className="font-bold text-lg uppercase">Habbyte Enterprise</h2>
+                    <p className="mb-2">(JM0913246-M)</p>
+                    <div className="flex justify-between font-bold border-b border-black pb-1 mb-1"><span>{doc.type}</span><span>{doc.number}</span></div>
+                    <p className="text-left">Tarikh: {doc.date}</p>
+                </div>
+            )}
 
-           {/* Content Table */}
-           <table className="w-full mb-8 text-left">
-              <thead><tr className="border-b-2 border-slate-800"><th className="py-2">Item</th><th className="text-center">Qty</th><th className="text-right">Jum</th></tr></thead>
-              <tbody>
-                {doc.items.map((item, i) => (
-                  <tr key={i} className="border-b border-slate-100">
-                    <td className="py-2">{item.description}</td>
-                    <td className="text-center">{item.quantity}</td>
-                    <td className="text-right">{(item.price * item.quantity).toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-           </table>
+            {/* Content Table */}
+            <table className="w-full mb-8 text-left">
+                <thead><tr className="border-b-2 border-slate-800"><th className="py-2">Item</th><th className="text-center">Qty</th><th className="text-right">Jum</th></tr></thead>
+                <tbody>
+                    {doc.items.map((item, i) => (
+                    <tr key={i} className="border-b border-slate-100">
+                        <td className="py-2">{item.description}</td>
+                        <td className="text-center">{item.quantity}</td>
+                        <td className="text-right">{(item.price * item.quantity).toFixed(2)}</td>
+                    </tr>
+                    ))}
+                </tbody>
+            </table>
 
-           <div className="flex justify-end border-t-2 border-slate-800 pt-4">
-              <div className="text-right">
-                 <p className="text-sm text-slate-500">Jumlah Besar</p>
-                 <p className="text-2xl font-bold">RM {total.toFixed(2)}</p>
-              </div>
-           </div>
+            <div className="flex justify-end border-t-2 border-slate-800 pt-4">
+                <div className="text-right">
+                    <p className="text-sm text-slate-500">Jumlah Besar</p>
+                    <p className="text-2xl font-bold">RM {total.toFixed(2)}</p>
+                </div>
+            </div>
 
-           {/* QR & Footer */}
-           {isPaid && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-8 border-green-500 text-green-500 font-black text-6xl px-4 py-2 -rotate-45 opacity-20 pointer-events-none">PAID</div>}
-           
-           {paymentQr && !isPaid && (
-              <div className="mt-8 flex flex-col items-center">
-                 <p className="text-[10px] font-bold mb-2">SCAN UNTUK BAYAR</p>
-                 <img src={paymentQr} className="w-32 h-32 border p-2" />
-              </div>
-           )}
+            {/* QR & Footer */}
+            {isPaid && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-8 border-green-500 text-green-500 font-black text-6xl px-4 py-2 -rotate-45 opacity-20 pointer-events-none">PAID</div>}
+            
+            {paymentQr && !isPaid && (
+                <div className="mt-8 flex flex-col items-center">
+                    <p className="text-[10px] font-bold mb-2">SCAN UNTUK BAYAR</p>
+                    <img src={paymentQr} className="w-32 h-32 border p-2" />
+                </div>
+            )}
+            </div>
         </div>
         <style>{`@media print { .no-print { display: none !important; } body { background: white; } .printable-area { box-shadow: none; width: 100%; margin: 0; } }`}</style>
      </div>
