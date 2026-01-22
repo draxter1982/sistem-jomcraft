@@ -392,7 +392,7 @@ export default function App() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // PIN ADMIN DITUKAR KEPADA 755250
+    // PIN ADMIN DITETAPKAN KEPADA 755250
     if (pin === '755250') setIsAuthenticated(true); 
     else alert('PIN Salah!');
   };
@@ -946,7 +946,7 @@ function CreateForm({ formData, setFormData, onSave, onCancel, isEditing }) {
 
         {/* Client Inputs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-           <div><label className="text-xs font-bold text-slate-500 uppercase mb-1 block">No. Rujukan</label><input required value={formData.number} onChange={e => setFormData({...formData, number: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-slate-900 transition-all" /></div>
+           <div><label className="text-xs font-bold text-slate-500 uppercase mb-1 block">No. Rujukan</label><input required value={formData.number} onChange={e => setFormData({...formData, number: e.target.value})} className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-900 transition-all" /></div>
            
            {/* DATE PICKER FIX */}
            <div>
@@ -954,17 +954,17 @@ function CreateForm({ formData, setFormData, onSave, onCancel, isEditing }) {
              <input 
                required 
                type="date" 
-               value={formData.date} 
+               value={formData.date || ''} 
                onChange={e => setFormData({...formData, date: e.target.value})} 
-               className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer" 
+               className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-900 transition-all text-slate-900 font-medium shadow-sm cursor-pointer" 
              />
            </div>
         </div>
 
         <div className="mb-8">
            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Pelanggan</label>
-           <input required placeholder="Nama Pelanggan" value={formData.clientName} onChange={e => setFormData({...formData, clientName: e.target.value})} className="w-full p-3 mb-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-slate-900 transition-all" />
-           <textarea placeholder="Alamat Penuh" rows="2" value={formData.clientAddress} onChange={e => setFormData({...formData, clientAddress: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-slate-900 transition-all" />
+           <input required placeholder="Nama Pelanggan" value={formData.clientName} onChange={e => setFormData({...formData, clientName: e.target.value})} className="w-full p-3 mb-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-900 transition-all" />
+           <textarea placeholder="Alamat Penuh" rows="2" value={formData.clientAddress} onChange={e => setFormData({...formData, clientAddress: e.target.value})} className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-900 transition-all" />
         </div>
 
         {/* Items */}
